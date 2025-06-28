@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register</title>
+  <script src="config.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .register-container {
+      background: white;
+      padding: 40px 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 450px;
+    }
+    h2 {
+      margin-bottom: 25px;
+      color: #333;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+    input:focus {
+      border-color: #007bff;
+      outline: none;
+      box-shadow: 0 0 5px rgba(0,123,255,0.3);
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .error, .success {
+      font-size: 14px;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .error { color: red; }
+    .success { color: green; }
+  </style>
+</head>
+<body>
+
+  <div class="register-container">
+    <h2>Create Account</h2>
+    <form id="registerForm" enctype="multipart/form-data">
+      <input type="text" id="firstName" placeholder="First Name" required />
+      <input type="text" id="sacondName" placeholder="Second Name" required />
+      <input type="date" id="bDate" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <input type="text" id="city" placeholder="City" />
+      <input type="file" id="image" accept="image/*" />
+      <button type="submit">Register</button>
+      <div id="message"></div>
+    </form>
+  </div>
+<script>
+  const form = document.getElementById("registerForm");
+  const msgDiv = document.getElementById("message");
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append("FirstName", document.getElementById("firstName").value.trim());
+    formData.append("SacondName", document.getElementById("sacondName").value.trim());
+    formData.append("BDate", document.getElementById("bDate").value);
+    formData.append("Email", document.getElementById("email").value.trim());
+    formData.append("Password", document.getElementById("password").value);
+    formData.append("City", document.getElementById("city").value.trim());
+
+    const imageInput = document.getElementById("image");
+    if (imageInput.files.length > 0) {
+      formData.append("ImageFile", imageInput.files[0]);
+    }
+
+    fetch(`${baseURL}/User/Register`, {
+      method: "POST",
+      body: formData
+    })
+    .then(async res => {
+      const text = await res.text();
+      console.log("Response status:", res.status);
+      console.log("Response body:", text);
+
+      let success = false;
+
+      try {
+        const data = JSON.parse(text);
+        // في حال الاستجابة JSON مثل {"message": "User Added"} أو {"errors":{...}}
+        if (res.ok) {
+          success = true;
+        } else if (data.errors) {
+          const firstErrorKey = Object.keys(data.errors)[0];
+          msgDiv.className = "error";
+          msgDiv.innerText = "❌ " + data.errors[firstErrorKey];
+          return;
+        } else {
+          msgDiv.className = "error";
+          msgDiv.innerText = "❌ " + (data.message || text);
+          return;
+        }
+      } catch {
+        if (res.ok || text.toLowerCase().includes("done")) {
+          success = true;
+        }
+      }
+
+      if (success) {
+        msgDiv.className = "success";
+        msgDiv.innerText = "✅ Registration successful!";
+        form.reset();
+        setTimeout(() => {
+          window.location.href = "Login.html";
+        }, 1500);
+      } else {
+        msgDiv.className = "error";
+        msgDiv.innerText = "❌ " + text;
+      }
+    })
+    .catch(error => {
+      console.error("❌ Registration error:", error);
+      msgDiv.className = "error";
+      msgDiv.innerText = "❌ Registration failed. Please try again.";
+    });
+  });
+</script>
+
+
+</body>
+</html>

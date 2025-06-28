@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>User Profile</title>
+  <script src="config.js"></script>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body {
+      background: linear-gradient(to right, #c9d6ff, #e2e2e2);
+      font-family: 'Segoe UI', sans-serif;
+      padding: 60px 15px;
+    }
+
+    .profile-wrapper {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .image-card {
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      height: 300px;
+    }
+
+    .image-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 0;
+    }
+
+    .profile-card {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .profile-card h4 {
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .profile-card p {
+      margin: 8px 0;
+      color: #555;
+      font-size: 15px;
+    }
+
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 25px;
+      flex-wrap: wrap;
+    }
+
+    .btn i {
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="profile-wrapper">
+
+  <!-- زر الرجوع للخلف -->
+  <div class="mb-4">
+    <a href="index.html" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  <!-- كارت الصورة -->
+  <div class="image-card" id="imageContainer">
+    <i class="fas fa-spinner fa-spin fa-2x text-muted d-block text-center pt-5"></i>
+  </div>
+
+  <div class="profile-card" id="profileContainer">
+    <p><i class="fas fa-spinner fa-spin"></i> Loading profile...</p>
+  </div>
+
+</div>
+
+<script>
+  async function loadProfile() {
+    const container = document.getElementById("profileContainer");
+    const imageContainer = document.getElementById("imageContainer");
+
+    try {
+      const response = await fetch(`${baseURL}/User/Profile`, {
+        credentials: "include"
+      });
+
+      if (!response.ok) {
+        throw new Error(` Request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const fullName = data.firstName + " " + (data.sacondName || "");
+      const imgSrc = data.imageBytes
+        ? `data:image/jpeg;base64,${data.imageBytes}`
+        : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+      imageContainer.innerHTML = `
+        <img src="${imgSrc}" alt="User Image" />
+      `;
+
+      container.innerHTML = `
+        <h4 id="userName">${fullName}</h4>
+        <p id="userEmail"><i class="fas fa-envelope"></i> ${data.email}</p>
+        <p id="userDate"><i class="fas fa-birthday-cake"></i> ${data.bDate || "N/A"}</p>
+        <p id="userAddress"><i class="fas fa-map-marker-alt"></i> ${data.city || "N/A"}</p>
+
+        <div class="btn-group">
+          <button class="btn btn-warning" onclick="goToUpdate(${data.id})">
+            <i class="fas fa-edit"></i> Update
+          </button>
+          <button class="btn btn-danger" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      `;
+
+    } catch (error) {
+      console.error(" Error loading profile:", error);
+      alert(" Failed to load profile. Redirecting to login...");
+      window.location.href = "Login.html";
+    }
+  }
+
+  function goToUpdate(id) {
+    window.location.href = `UpdateProfile.html?id=${id}`;
+  }
+
+  function logout() {
+    fetch(`${baseURL}/User/Logout`, {
+      method: "POST",
+      credentials: "include"
+    }).finally(() => {
+      sessionStorage.clear();
+      window.location.href = "Login.html";
+    });
+  }
+
+  loadProfile();
+</script>
+</body>
+</html>
